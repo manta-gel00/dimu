@@ -1,0 +1,113 @@
+openapi: '3.0.2'
+info:
+  title: 'Digitalt Museum API'
+  description: 'Search among the objects, images, drawings and documents in the collections
+    of Norwegian and Swedish museums.
+
+    Refine your searches with filters. Data is available in XML or JSON format.'
+  version: '1.0'
+  contact:
+    name: 'Digitalt Museum'
+    url: 'https://dok.digitaltmuseum.org/sv/api' 
+    email: 'support@kulturit.no'
+
+externalDocs:
+  description: API Documentation
+  url: http://api.dimu.org/doc/public_api.html
+
+security:
+- app_id: []
+
+servers:
+- url: http://api.dimu.org/api/
+  description: Production server
+
+paths:
+  /owners:
+    get:
+      tags:
+      - Owners
+      summary: 'Get a list of museums'
+      description: 'Gets a list of names and IDs of museums in Norway or Sweden.'
+      operationId: getOwners
+      parameters:
+        - $ref: '#/components/parameters/country'
+        - $ref: '#/components/parameters/wt'
+      
+      responses:
+          200:
+            description: Successful response
+            content:
+              application/json:
+                 schema:
+                    $ref: '#/components/schemas/200'
+
+          404:
+            description: Not found response
+            content:
+              text/plain:
+                schema:
+                  title: Data not found.
+                  type: string
+                  example: Not found
+          
+          500:
+            description: Internal server error
+            content:
+              text/plain:
+                schema:
+                  title: Internal server error occurred, or the API key is invalid.
+                  type: string
+                  example: Internal server error          
+components:
+
+  securitySchemes:
+    app_id:
+      type: apiKey
+      description: API key to authorize requests.
+      name: appid
+      in: query  
+
+  parameters:
+    country:
+      name: country
+      in: query
+      description: 'The country of the museums.'
+      schema:
+        type: string
+        enum: ['no', 'se']
+        default: 'no'
+
+    wt:
+      name: mode
+      in: query
+      description: "**Mode**. *Example: json*. Determines the format of the response. Possible values are `xml` and `json`. If the mode parameter is empty, the format is `xml` by default."
+      schema:
+        type: string
+        enum: [json, xml]
+        default: 'xml'
+
+  schemas:
+    "200":
+      title: Successful response
+      type: object
+      properties:
+        identifier:
+          type: string
+          description: The ID of the museum.
+          example: 'HBE'
+        name:
+          type: string
+          description: The name of the museum.
+          example: 'Hadeland Bergverksmuseum' 
+        parent:
+          type: string
+          description: The identifier of parent museum of the museum, if applicable.
+          example: 'RNM'
+
+
+        
+    
+    
+
+  

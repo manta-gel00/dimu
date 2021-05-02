@@ -1,0 +1,818 @@
+openapi: 3.0.0
+info:
+  title: Digitalt Museum API
+  version: '1.0'
+  description: >+
+    \
+
+    \
+
+    _This documentation was last updated on 23 April 2021_
+
+
+    # Next release
+
+    We will release a new version of the API on 26 June 2021.   
+
+    These are the changes in the next release:
+
+    - The search term parameter <code>q</code> is no longer required in [Search
+    museum collections](http://ida-johansson.com/dimu/#operation/get-solr).
+
+    - A more descriptive error is returned when requesting an image in a format
+    that is not available with [Get the image for an
+    object](http://ida-johansson.com/dimu/#operation/get-image)
+
+
+    **IMPORTANT:** Update your API key before 26 June 2021. If you do not update
+    the API key, your calls to the API will no longer work.
+
+
+    # Overview
+
+    With the Digitalt Museum API you can search among thousands of objects,
+    images, drawings and documents in the collections
+
+    of Norwegian and Swedish museums. 
+
+
+    Use the API to display the data in your own web application, or use data
+    from the collections for your research. You can for example show museum
+    objects from a geographical area or of a certain type, or create statistics
+    for the collections.
+
+
+    Refine your searches with filters. Data is available in XML or JSON format
+    and images are provided in JPEG.
+
+
+    ## Search box
+
+    If you are looking for an easy way to create a search box for your webpage,
+    visit [this page](https://widgets.dimu.no/) instead.
+
+
+    ## Servers
+
+    Use the server http://mm.dimu.org when searching for images.  
+
+    Use the server http://api.dimu.org/api for all other endpoints.  
+
+
+    # Getting started
+
+    Here are some examples to get you started:
+
+
+    - Get a list of museums in Norway. The result is returned in JSON.  
+
+    http://api.dimu.org/api/owners?country=no&wt=json&api.key=demo
+
+
+    - Get a list of buildings that match the search term "Troms". The result is
+    returned in XML which is default:  
+
+    http://api.dimu.org/api/solr/select?q=troms&fq=artifact.type:Building&api.key=demo
+
+
+    - Get a list of things that match the search term "hardangersaum" and where
+    the object has pictures and is owned by the museum Kystmuseet i Øygarden
+    (KYO). The result is returned in JSON.  
+
+    http://api.dimu.org/api/solr/select?q=hardangersaum&fq=artifact.type:Thing&fq=artifact.hasPictures:true&fq=identifier.owner:KYO&wt=json&api.key=demo 
+
+
+    Please see the reference documentation for detailed information.
+
+
+
+  contact:
+    name: KulturIT
+    url: 'https://dok.digitaltmuseum.org/sv/api'
+    email: support@kulturit.no
+servers:
+  - url: 'http://api.dimu.org/api'
+    description: Museums and museum collections
+  - url: 'http://mm.dimu.org'
+    description: Image database
+paths:
+  /owners:
+    get:
+      summary: Get a list of museums
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                properties:
+                  owners:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      type: object
+                      properties:
+                        identifier:
+                          type: string
+                          minLength: 1
+                          description: The ID for the museum.
+                        name:
+                          type: string
+                          minLength: 1
+                          description: The name of the museum.
+                        parent:
+                          description: |-
+                            The ID of the parent museum, if applicable.
+                            Is `null` if there is no parent.
+                          type: string
+                      required:
+                        - identifier
+                        - name
+                required:
+                  - owners
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+      operationId: get-owners
+      description: Gets a list of names and IDs of museums in Norway or Sweden.
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - 'no'
+              - se
+            default: 'no'
+            example: se
+          in: query
+          name: country
+          description: >-
+            The country of the museums. Valid values: "no" (Norway), "se"
+            (Sweden) 
+        - $ref: '#/components/parameters/wt'
+  /solr/select:
+    get:
+      summary: Search the museum collections
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                properties:
+                  responseHeader:
+                    type: object
+                    properties:
+                      zkConnected:
+                        type: boolean
+                      status:
+                        type: number
+                      QTime:
+                        type: number
+                      params:
+                        type: object
+                        properties:
+                          q:
+                            type: string
+                            minLength: 1
+                          api.key:
+                            type: string
+                            minLength: 1
+                          df:
+                            type: string
+                            minLength: 1
+                          qt:
+                            type: string
+                            minLength: 1
+                          fl:
+                            type: string
+                            minLength: 1
+                          q.op:
+                            type: string
+                            minLength: 1
+                          fq:
+                            type: string
+                            minLength: 1
+                          rows:
+                            type: string
+                            minLength: 1
+                          wt:
+                            type: string
+                            minLength: 1
+                        required:
+                          - q
+                          - api.key
+                          - df
+                          - qt
+                          - fl
+                          - q.op
+                          - fq
+                          - rows
+                          - wt
+                    required:
+                      - zkConnected
+                      - status
+                      - QTime
+                      - params
+                  response:
+                    type: object
+                    properties:
+                      numFound:
+                        type: number
+                      start:
+                        type: number
+                      docs:
+                        type: array
+                        uniqueItems: true
+                        minItems: 1
+                        items:
+                          required:
+                            - identifier.owner
+                            - artifact.uuid
+                            - artifact.pictureCount
+                            - artifact.defaultPictureIndex
+                            - artifact.type
+                            - artifact.defaultMediaIdentifier
+                            - artifact.hasPictures
+                            - artifact.uniqueId
+                            - artifact.ingress.production.toYear
+                            - artifact.ingress.title
+                            - artifact.ingress.production.place
+                            - artifact.publishedDate
+                            - identifier.id
+                            - artifact.hasChildren
+                            - artifact.updatedDate
+                            - artifact.defaultPictureDimension
+                            - artifact.ingress.production.fromYear
+                          properties:
+                            identifier.owner:
+                              type: string
+                              minLength: 1
+                            artifact.uuid:
+                              type: string
+                              minLength: 1
+                            artifact.pictureCount:
+                              type: number
+                            artifact.defaultPictureIndex:
+                              type: number
+                            artifact.ingress.classification:
+                              type: array
+                              items:
+                                properties: {}
+                            artifact.type:
+                              type: string
+                              minLength: 1
+                            artifact.defaultMediaIdentifier:
+                              type: string
+                              minLength: 1
+                            artifact.hasPictures:
+                              type: boolean
+                            artifact.uniqueId:
+                              type: string
+                              minLength: 1
+                            artifact.ingress.production.toYear:
+                              type: number
+                            artifact.ingress.title:
+                              type: string
+                              minLength: 1
+                            artifact.ingress.production.place:
+                              type: string
+                              minLength: 1
+                            artifact.publishedDate:
+                              type: string
+                              minLength: 1
+                            identifier.id:
+                              type: string
+                              minLength: 1
+                            artifact.hasChildren:
+                              type: boolean
+                            artifact.updatedDate:
+                              type: string
+                              minLength: 1
+                            artifact.defaultPictureDimension:
+                              type: string
+                              minLength: 1
+                            artifact.ingress.production.fromYear:
+                              type: number
+                    required:
+                      - numFound
+                      - start
+                      - docs
+                required:
+                  - responseHeader
+                  - response
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+      operationId: get-solr
+      description: >-
+        Searches in the museum collections. You can use multiple filter queries
+        in the same call. The search term parameter `q` is always required. The
+        database uses Apache Solr and follows [Lucene
+        syntax](http://www.lucenetutorial.com/lucene-query-syntax.html).
+      parameters:
+        - schema:
+            type: string
+            example: fiskebåt
+          in: query
+          name: q
+          description: >-
+            The search term. Searches the fields `artifact.ingress.title`
+            `artifact.ingress.description` `artifact.ingress.subjects` 
+            `artifact.ingress.production.place`
+          required: true
+        - $ref: '#/components/parameters/wt'
+        - schema:
+            type: string
+            example: 'fq=artifact.hasPictures:true'
+          in: query
+          name: fq
+          description: >-
+            Filter query for filtering search results. Syntax: fq={FILTER QUERY
+            FIELD}:{FILTER VALUE}. See table below for valid fields. Some fields
+            have specific valid values. Please note that the parameter for
+            search term <code>q</code> is always required.
+
+            <table> <tr> <th>Filter query field</th> <th>Description</th>
+            <th>Type</th> <th>Notes</th> <th>Example</th> </tr>
+
+            <tr> <td><code>identifier.id</code></td> <td>The ID for an object in
+            the database.</td> <td>string</td> <td></td>
+            <td><code>fq=identifier.id:TD.F-10191</code></td> </tr>
+
+            <tr> <td><code>identifier.owner</code></td> <td>The ID for a
+            museum.</td> <td>string</td> <td>Find the ID as
+            <code>identifier</code> in <a
+            href="http://ida-johansson.com/dimu/#operation/get-owners">Get a
+            list of museums</a></td>. <td><code>identifier.owner:KYO</code></td>
+            </tr>
+
+            <tr> <td><code>artifact.uniqueId</code></td> <td>A unique ID for the
+            object.</td> <td>string</td> <td>Another type of ID.</td>
+            <td><code>fq=artifact.uniqueId:021058342156</code></td> </tr>
+
+            <tr> <td><code>artifact.type</code></td> <td>The type of
+            object.</td> <td>string</td> <td>Valid values (case-sensitive):
+            <code>Thing</code> <code>Photograph</code> <code>Architecture</code>
+            <code>Artdesign</code> <code>Building</code> <code>Exhibition</code>
+            <code>ExternalArticle</code> <code>Fineart</code>
+            <code>Folder</code> <code>Name</code> <code>Person</code></td>
+            <td><code>fq=artifact.type:Building</code></td> </tr>
+
+            <tr> <td><code>artifact.pictureCount</code></td> <td>The number of
+            pictures on the object.</td> <td>integer</td> <td></td>
+            <td><code>fq=artifact.pictureCount:3</code></td> </tr>
+
+            <tr> <td><code>artifact.hasPictures</code></td> <td>If the object
+            has pictures.</td> <td>boolean</td> <td>Set to <code>true</code> to
+            get objects with pictures and <code>false</code> to get objects
+            without pictures.</td>
+            <td><code>fq=artifact.hasPictures:true</code></td> </tr>
+
+            <tr> <td><code>artifact.defaultMediaIdentifier</code></td> <td>ID
+            for the image for the object.</td> <td>string</td> <td>ID at the
+            Dimu Multimedia Server (DMS).</td>
+            <td><code>fq=artifact.defaultMediaIdentifier:03347TTZ7BYQ</code></td>
+            </tr>
+
+            <tr> <td><code>artifact.defaultPictureIndex</code></td> <td>ID for
+            the object image.</td> <td>string</td> <td>DEPRECATED</td>
+            <td><code>q=artifact.defaultPictureIndex:137091</code></td> </tr>
+
+            <tr> <td><code>artifact.publishedDate</code></td> <td>Date when the
+            object was published.</td> <td>string</td> <td>Format:
+            YYYY-MM-DD</td>
+            <td><code>fq=artifact.publishedDate:2019-05-14T10:17:33.230Z</code></td>
+            </tr>
+
+            <tr> <td><code>artifact.updatedDate</code></td> <td>Date when the
+            object was last modified.</td> <td>string</td> <td>Format:
+            YYYY-MM-DD</td>
+            <td><code>fq=artifact.updatedDate:2019-05-14T10:17:33.230Z</code></td>
+            </tr> 
+
+            <tr> <td><code>artifact.ingress.title</code></td> <td>Title for the
+            object.</td> <td>string</td> <td></td>
+            <td><code>fq=artifact.ingress.title:"Putevarskantar,%20sett"</code></td>
+            </tr>
+
+            <tr> <td><code>artifact.ingress.production.fromYear</code></td>
+            <td>Production year for the object - interval start.</td>
+            <td>integer</td> <td>YYYY</td>
+            <td><code>fq=artifact.ingress.production.fromYear:1972</code></td>
+            </tr>
+
+            <tr> <td><code>artifact.ingress.production.toYear</code></td>
+            <td>Production year for the object - interval end.</td>
+            <td>integer</td> <td>YYYY</td>
+            <td><code>fq=artifact.ingress.production.toYear:1995</code></td>
+            </tr>
+
+            <tr> <td><code>artifact.ingress.production.place</code></td>
+            <td>Production place for the object.</td> <td>string</td>
+            <td>Case-sensitive.</td>
+            <td><code>fq=artifact.ingress.production.place:Finnmark</code></td>
+            </tr>
+
+            <tr> <td><code>artifact.ingress.classification</code></td>
+            <td>Classification of the object.</td> <td>number</td> <td></td>
+            <td><code>fq=artifact.ingress.classification:531.23</code></td>
+            </tr>
+
+            <tr> <td><code>artifact.ingress.subjects</code></td> <td>Subject
+            tags.</td> <td>string</td> <td>Case-sensitive.</td>
+            <td><code>fq=artifact.ingress.subjects:sjøsamisk</code></td> </tr>
+
+            <tr> <td><code>artifact.ingress.license</code></td>
+            <td>License.</td> <td>string</td> <td></td>
+            <td><code>fq=artifact.ingress.license:"AC 1"</code></td> </tr>
+
+            <tr> <td><code>artifact.coordinate</code></td> <td>Geographical
+            coordinate. </td> <td>string</td> <td>In degrees. Latitude,
+            longitude.</td> <td><code>fq=artifact.coordinate:"60.09999999999999,
+            9.100000000000022"</code></td> </tr>
+
+            </table>
+  /artifact:
+    get:
+      summary: Get extended information for an object
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                properties:
+                  dimu_code:
+                    type: string
+                    minLength: 1
+                  unique_id:
+                    type: string
+                    minLength: 1
+                  identifier:
+                    type: string
+                    minLength: 1
+                  owner:
+                    type: string
+                    minLength: 1
+                  type:
+                    type: string
+                    minLength: 1
+                  subtype: {}
+                  locality: {}
+                  coordinate:
+                    type: string
+                    minLength: 1
+                  place: {}
+                  construction: {}
+                  title:
+                    type: string
+                    minLength: 1
+                  description: {}
+                  otherInformation: {}
+                  producer:
+                    type: string
+                    minLength: 1
+                  placeOfProduction:
+                    type: string
+                    minLength: 1
+                  subjects:
+                    type: array
+                    items:
+                      type: object
+                  motif:
+                    type: object
+                    required:
+                      - description
+                    properties:
+                      description:
+                        type: string
+                        minLength: 1
+                  classifications:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      type: object
+                      properties:
+                        class:
+                          type: string
+                          minLength: 1
+                        system:
+                          type: string
+                          minLength: 1
+                        code:
+                          type: string
+                          minLength: 1
+                        description:
+                          type: string
+                          minLength: 1
+                      required:
+                        - class
+                        - system
+                        - code
+                        - description
+                  history:
+                    type: object
+                    required:
+                      - events
+                    properties:
+                      description: {}
+                      events:
+                        type: array
+                        uniqueItems: true
+                        minItems: 1
+                        items:
+                          type: object
+                          properties:
+                            eventType:
+                              type: string
+                              minLength: 1
+                            relatedPersons:
+                              type: array
+                              uniqueItems: true
+                              minItems: 1
+                              items:
+                                type: object
+                                properties:
+                                  role:
+                                    type: string
+                                    minLength: 1
+                                  name:
+                                    type: string
+                                    minLength: 1
+                                  uuid:
+                                    type: string
+                                    minLength: 1
+                                  type:
+                                    type: string
+                                    minLength: 1
+                                required:
+                                  - role
+                                  - name
+                                  - uuid
+                                  - type
+                            relatedPlaces:
+                              type: array
+                              items:
+                                type: object
+                            timespan:
+                              type: object
+                              properties:
+                                fromYear:
+                                  type: number
+                                toYear:
+                                  type: number
+                                comment:
+                                  type: string
+                                  minLength: 1
+                              required:
+                                - fromYear
+                                - toYear
+                                - comment
+                          required:
+                            - eventType
+                  images:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      type: object
+                      properties:
+                        imageId:
+                          type: number
+                        photographer: {}
+                        mediaId:
+                          type: string
+                          minLength: 1
+                        url:
+                          type: string
+                          minLength: 1
+                        licenses:
+                          type: array
+                          items:
+                            type: object
+                      required:
+                        - imageId
+                        - mediaId
+                        - url
+                  files:
+                    type: array
+                    items:
+                      type: object
+                  licenses:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          minLength: 1
+                        system:
+                          type: string
+                          minLength: 1
+                        description:
+                          type: string
+                          minLength: 1
+                      required:
+                        - code
+                        - system
+                        - description
+                  partOfCollection:
+                    type: object
+                    required:
+                      - owner
+                      - uuid
+                      - name
+                    properties:
+                      owner:
+                        type: object
+                        required:
+                          - identifier
+                          - name
+                        properties:
+                          identifier:
+                            type: string
+                            minLength: 1
+                          name:
+                            type: string
+                            minLength: 1
+                      uuid:
+                        type: string
+                        minLength: 1
+                      name:
+                        type: string
+                        minLength: 1
+                required:
+                  - dimu_code
+                  - unique_id
+                  - identifier
+                  - owner
+                  - type
+                  - coordinate
+                  - title
+                  - producer
+                  - placeOfProduction
+                  - subjects
+                  - motif
+                  - classifications
+                  - history
+                  - images
+                  - files
+                  - licenses
+                  - partOfCollection
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+        '500':
+          description: Internal Server Error
+      operationId: get-artifact
+      parameters:
+        - schema:
+            type: string
+            example: OMU
+          in: query
+          name: owner
+          description: >-
+            Find this ID as `identifier.owner` in [Search museum
+            collections](http://ida-johansson.com/dimu/#operation/get-solr).
+          required: true
+        - schema:
+            type: string
+            example: ese
+            enum:
+              - ese
+              - abm
+          in: query
+          name: mapping
+          description: >-
+            The format of the response data. Valid values: ese = Europeana, abm
+            = Norwegiana.
+          required: true
+        - schema:
+            type: string
+            example: OB.F11531a
+          in: query
+          name: identifier
+          description: >-
+            The ID for the object. Find this ID as `identifier.id` in [Search
+            museum
+            collections](http://ida-johansson.com/dimu/#operation/get-solr). 
+          required: true
+        - schema:
+            type: string
+            example: 021058342156
+          in: query
+          name: unique.id
+          description: >-
+            Another ID for the object. Find this ID as `artifact.uniqueId` in
+            [Search museum
+            collections](http://ida-johansson.com/dimu/#operation/get-solr). 
+          required: true
+      description: >-
+        Get extended object information for any object in the database. Use
+        [Search museum
+        collections](http://ida-johansson.com/dimu/#operation/get-solr) to find
+        IDs for owner, identifier or unique.id. 
+
+        All fields are required, but use either:<br /> `owner` together with
+        `identifier`<br /> or<br /> `unique.id`.
+  '/image/{identifier}':
+    get:
+      summary: Get the image for an object
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+              examples:
+                example-1:
+                  value: {}
+          headers: {}
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+      operationId: get-image
+      description: >-
+        Gets the image for an object in one of the available dimensions: 
+
+        57x57-crop, 145x105, 167x167, 174x156-crop, 250x250, 400x400, 600x380,
+        600x600, 720x480, 800x800, 1200x1200.
+
+        Not all dimensions are available for all objects.
+      parameters:
+        - schema:
+            type: string
+            example: 600x380
+            enum:
+              - 57x57-crop
+              - 145x105
+              - 167x167
+              - 174x156-crop
+              - 250x250
+              - 400x400
+              - 600x380
+              - 600x600
+              - 720x480
+              - 800x800
+              - 1200x1200
+          in: query
+          name: dimension
+          description: The dimensions for the image.
+          required: true
+    parameters:
+      - schema:
+          type: string
+          example: 02347TTZ7Bmf
+        name: identifier
+        description: >-
+          `identifier` is `artifact.defaultMediaIdentifier` in [Search museum
+          collections](http://ida-johansson.com/dimu/#operation/get-solr).
+        in: path
+        required: true
+components:
+  securitySchemes:
+    app_id:
+      description: >-
+        Contact us at support@kulturit.no to request a personal API key. Use
+        "demo" for testing.
+      name: api.key
+      type: apiKey
+      in: query
+  parameters:
+    wt:
+      name: wt
+      in: query
+      required: false
+      schema:
+        type: string
+        default: xml
+        enum:
+          - xml
+          - json
+        example: json
+      description: The format of the response data.
+security:
+  - app_id: []

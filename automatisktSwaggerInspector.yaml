@@ -1,0 +1,45 @@
+---
+openapi: 3.0.1
+info:
+  title: defaultTitle
+  description: defaultDescription
+  version: "0.1"
+servers:
+- url: http://api.dimu.org
+paths:
+  /api/owners:
+    get:
+      description: Auto generated using Swagger Inspector
+      parameters:
+      - name: country
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: se
+      - name: api.key
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: 'demo '
+      - name: wt
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: json
+      responses:
+        "200":
+          description: Auto generated using Swagger Inspector
+      servers:
+      - url: http://api.dimu.org
+    servers:
+    - url: http://api.dimu.org
+components: {}
